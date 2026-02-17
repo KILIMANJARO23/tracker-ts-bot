@@ -15,6 +15,9 @@ declare global {
   }
 }
 
+// Базовый URL API бота, который доступен снаружи через ngrok (порт 3000)
+const API_BASE = "https://unbarbarously-pillowlike-travis.ngrok-free.dev";
+
 type ApiDashboard = {
   ok: boolean;
   telegramUserId: number | string;
@@ -40,7 +43,7 @@ export function App() {
       return;
     }
 
-    const res = await fetch("http://localhost:3000/api/auth/telegram", {
+    const res = await fetch(`${API_BASE}/api/auth/telegram`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ initData }),
@@ -55,7 +58,7 @@ export function App() {
 
   async function loadDashboard() {
     if (!token) return;
-    const res = await fetch("http://localhost:3000/api/dashboard", {
+    const res = await fetch(`${API_BASE}/api/dashboard`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     setDashboard(await res.json());
