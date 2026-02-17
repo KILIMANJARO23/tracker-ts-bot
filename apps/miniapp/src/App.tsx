@@ -15,8 +15,9 @@ declare global {
   }
 }
 
-// Базовый URL API бота, который доступен снаружи через ngrok (порт 3000)
-const API_BASE = "https://unbarbarously-pillowlike-travis.ngrok-free.dev";
+// Базовый URL API.
+// В dev по умолчанию ходим на локальный сервер (http://localhost:3000).
+const API_BASE = "http://localhost:3000";
 
 type ApiDashboard = {
   ok: boolean;
