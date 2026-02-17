@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        BigInt  @id
+  chatId    BigInt
+  state     String  @default("MAIN_MENU")
+  lastMsgId BigInt?
+  tempData  Json?
+
+  habits       Habit[]
+  goals        Goal[]
+  transactions Transaction[]
+  subscriptions Subscription[]
+  payments     Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Habit {
+  id     Int    @id @default(autoincrement())
+  userId BigInt
+  title  String
+  days   String
+  notify Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("habits")
+}
+
+model Goal {
+  id       Int      @id @default(autoincrement())
+  userId   BigInt
+  title    String
+  category String?
+  deadline DateTime?
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  steps        GoalStep[]
+  transactions Transaction[]
+
+  @@index([userId])
+  @@map("goals")
+}
+
+model GoalStep {
+  id       Int     @id @default(autoincrement())
+  goalId   Int
+  stepText String
+  isDone   Boolean @default(false)
+
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@index([goalId])
+  @@map("goal_steps")
+}
+
+enum TransactionType {
+  inc
+  exp
+}
+
+model Transaction {
+  id        Int             @id @default(autoincrement())
+  userId    BigInt
+  type      TransactionType
+  amount    Decimal         @db.Decimal(10, 2)
+  category  String
+  goalId    Int?
+  createdAt DateTime        @default(now())
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal Goal? @relation(fields: [goalId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([goalId])
+  @@map("transactions")
+}
+
+enum SubscriptionStatus {
+  trial
+  active
+  past_due
+  canceled
+  expired
+}
+
+model Subscription {
+  id        String             @id @default(cuid())
+  userId    BigInt
+  planCode  String
+  status    SubscriptionStatus
+  trialUntil DateTime?
+  expiresAt DateTime?
+
+  provider   String?
+  providerRef String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+  @@map("subscriptions")
+}
+
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+  refunded
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  userId        BigInt
+  provider      String
+  invoicePayload String
+  telegramChargeId String?
+  providerChargeId String?
+  amount        Decimal       @db.Decimal(10, 2)
+  currency      String
+  status        PaymentStatus
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+  @@map("payments")
+}
+
