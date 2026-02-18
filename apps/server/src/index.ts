@@ -2,9 +2,6 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import { z } from "zod";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import fs from "node:fs/promises";
 
 import { env } from "./config.js";
 import { createBot } from "./bot.js";
@@ -13,10 +10,6 @@ import { prisma } from "./db.js";
 
 const app = Fastify({ logger: true });
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const miniAppDistRoot = path.resolve(__dirname, "../../miniapp/dist");
-
 await app.register(cors, {
   origin: true,
   credentials: true,
@@ -24,40 +17,6 @@ await app.register(cors, {
 
 await app.register(jwt, {
   secret: env.JWT_SECRET,
-});
-
-// Раздаём собранный Mini App как статику по /app/*
-app.get("/app/*", async (req, reply) => {
-  const params = req.params as { "*": string } | Record<string, string>;
-  const wildcard = (params && ("*" in params ? (params as any)["*"] : "")) as string | undefined;
-  const relativePath = !wildcard || wildcard === "/" ? "index.html" : wildcard;
-  const filePath = path.join(miniAppDistRoot, relativePath);
-
-  try {
-    const data = await fs.readFile(filePath);
-    const ext = path.extname(filePath).toLowerCase();
-    const type =
-      ext === ".html"
-        ? "text/html; charset=utf-8"
-        : ext === ".js"
-        ? "application/javascript; charset=utf-8"
-        : ext === ".css"
-        ? "text/css; charset=utf-8"
-        : ext === ".json"
-        ? "application/json; charset=utf-8"
-        : ext === ".png"
-        ? "image/png"
-        : ext === ".jpg" || ext === ".jpeg"
-        ? "image/jpeg"
-        : ext === ".svg"
-        ? "image/svg+xml"
-        : "application/octet-stream";
-
-    reply.header("Content-Type", type);
-    return reply.send(data);
-  } catch {
-    return reply.code(404).send("Not found");
-  }
 });
 
 const bot = createBot({ token: env.TELEGRAM_BOT_TOKEN, prisma });

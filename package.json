@@ -7,7 +7,7 @@
   "scripts": {
     "dev:server": "npm --workspace apps/server run dev",
     "build": "npm --workspace apps/server run build",
-    "typecheck": "npm --workspace apps/server run typecheck && npm --workspace apps/miniapp run typecheck"
+    "typecheck": "npm --workspace apps/server run typecheck"
   }
 }
 
